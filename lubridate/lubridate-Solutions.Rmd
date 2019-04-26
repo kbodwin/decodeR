@@ -1,0 +1,134 @@
+---
+title: "decodeR:  Dates and Times"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+```
+
+
+## Warm-up exercises
+
+Answer the following using code (even if you know the answer already).
+
+1. Save your birthday as a Datetime object in R.  
+
+```{r}
+bday <- make_date(year = 1989, month = 04, day = 02)
+```
+
+
+2. What day of the week does/did your birthday fall on in 2019?
+
+```{r}
+bday2 <- bday
+year(bday2) <- 2019
+bday2 %>% wday(label = TRUE)
+```
+
+3. On what day of the week should you plan your 100th birthday party?
+
+```{r}
+(bday + years(100)) %>% wday(label = TRUE)
+```
+
+4. Find the date that is exactly 9 months before your birthday.  If it falls on a holiday, think about the implications.
+
+```{r}
+bday - months(9)
+```
+
+5. The following code loads a dataset giving the date ranges for the 12 Zodiac signs.  By making appropriate adjustments and calculations, find your Zodiac sign.
+
+```{r}
+zodiac <- read.csv("./lubridate/zodiac.csv")
+
+zodiac %>% separate(Dates, into = c("Start", "End"), sep = "-") %>%
+  mutate(
+    Start = parse_date_time(Start, order = "md"),
+    End = parse_date_time(End, order = "md")
+  ) %>%
+  filter(bday2 >= Start, bday2 <= End)
+
+```
+
+
+## Solve the mystery
+
+Speaking of the Zodiac, one of the most famous mysteries in California history is the identity of the so-called "Zodiac Killer", who murdered 7 people in Northern California between 1968 and 1969.
+
+A new murder was committed last year in California, suspected to be the work of a new Zodiac Killer on the loose.  Fortunately, a camera was planted at the location where the body was found.  The FBI has provided you with a list of people who entered the building last year, and what date and time they entered, in Pacific Standard Time (PST).
+
+
+```{r}
+suspects <- read.csv("./lubridate/suspects.csv")
+```
+
+Unfortunately, the date and time of the murder is not known.  You have been hired to crack the case.  Use the clues below to discover the murderer's identity.
+
+```{r, include = FALSE}
+ted <- suspects %>% filter(Name == " Ted Cruz") %>% mutate(
+  Time.Spotted = force_tz(ymd_hms(Time.Spotted), "America/Los_Angeles")
+)
+am(ted$Time.Spotted)
+wday(ted$Time.Spotted, label = TRUE)
+month(ted$Time.Spotted)
+hour(with_tz(ted$Time.Spotted, tz = "GMT"))
+as.numeric(ted$Time.Spotted)
+```
+
+
+1. Based on the sunburn patterns on the body, the murder was not committed in the morning.
+
+```{r}
+suspects <- suspects %>% mutate(
+  Time.Spotted = force_tz(ymd_hms(Time.Spotted), "America/Los_Angeles")
+  ) %>% filter(!am(Time.Spotted)) 
+
+```
+
+
+2. The room where the murder was committed is closed Tuesdays and Thursdays, so the murder did not happen on those days.
+
+```{r}
+suspects <- suspects %>% filter(!(wday(Time.Spotted, label = TRUE) %in% c("Tue", "Thu")))
+```
+
+
+3. It is believed that the murder was committed within 5 weeks (35 days) of Thanksgiving, 2018. 
+
+```{r}
+tgiving <- make_date(year = 2018, month = 11, day = 22)
+suspects <- suspects %>% filter(Time.Spotted >= tgiving - 35, Time.Spotted <= tgiving + 35) 
+```
+
+
+4. It was discovered that just before being murdered, the victim tried to send a text to her sister in Iceland, saying "Goodnight over there!"
+
+```{r}
+suspects <- suspects %>% filter(pm(with_tz(Time.Spotted, "GMT"))) 
+```
+
+
+5. The Killer left behind a birthday card at the scene of the crime.  The date is smudged, but the number of the month is shown to be 22.  It is thought that perhaps this murder took place less than two days after the Killer's birthday.
+
+```{r}
+suspects <- suspects %>% filter(mday(Time.Spotted) <= 24 & mday(Time.Spotted) >= 22) 
+```
+
+
+6. The Killer him/herself is amused by our efforts, and he has sent us a cryptic clue:  "The number of minutes between Jan 1, 1970 at midnight and the time I arrived on the scene is divisible by 10."
+
+
+```{r}
+suspects <- suspects %>% filter(as.integer(as.numeric(Time.Spotted)/60) %% 10 == 0) 
+```
+
+
+Who is the killer?  TED CRUZ!
+
+
+

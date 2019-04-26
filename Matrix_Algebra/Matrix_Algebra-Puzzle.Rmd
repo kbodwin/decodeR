@@ -1,0 +1,160 @@
+---
+title: "decodeR:  Matrix Algebra"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)  #ignore this
+```
+
+## Introduction
+
+You will be asked to perform a series of calculations on a matrix of numbers.  If you follow all the steps successfully, your end result will be a matrix of pixel intensities for an image - that is, if you plot your matrix (I have supplied the code for that), you will see a black and white photograph.
+
+## Setup 
+
+Run the following code chunk to load up your matrix (M), and to generate some random matrices and vectors that we will use along the way.
+
+```{r}
+### DO NOT CHANGE ANYTHING IN THIS CODE CHUNK!!!
+
+M = read.csv("./Matrix_Algebra/img.txt", header = FALSE)
+M = as.matrix(M)
+
+
+n = nrow(M)
+p = ncol(M)
+
+set.seed(123)
+A <- diag(rnorm(p))
+set.seed(456)
+B <- tcrossprod(as.matrix(array(rnorm(25), c(5,5))))
+set.seed(789)
+x <- abs(rnorm(p))
+set.seed(101)
+y <- rnorm(n)
+set.seed(112)
+H <- as.matrix(array(rnorm(n*p), c(n,p)))
+
+```
+
+## Hints
+
+### Hint 1
+
+When you are asked to do something to the matrix M, make sure you save the updated matrix, not just perform the calculation and print it out. **At each step, the matrix M should retain its original dimensions - this is a good way to check your progress.**  For example, let's do step 1 together:
+
+1. Matrix-multiply M by A.
+
+```{r, eval = FALSE}
+# Correct step:
+M <- M %*% A
+
+# This will perform the calculation, but not update M
+# M %*% A
+
+# This will result in an error because the dimensions do not match
+#  A %*% M
+```
+
+### Hint 2
+
+When you are doing matrix multiplications, it is typically harder to make errors, because R will not perform the calculation if the dimensions don't line up right.
+
+When you are dealing with a matrix or vector and a scalar, it is also harder to make errors, because there are not dimensions to worry about with the scalar.
+
+However, when you are dealing with a matrix and vector or two vectors, sometimes you can do the wrong thing and get no errors.
+
+For example, let's look at the **wrong way** to do Step 2:
+
+
+2. Multiply every row of M elementwise by x. 
+
+```{r}
+M_wrong <- M*x
+dim(M)
+dim(M_wrong)
+```
+
+What happened?  Well, R's default when given ordinary multiplication (`*`) on a matrix and a vector is to start multiplying down the **columns** of the matrix, not the rows.  This is because we consider all vectors, by default, to be **column vectors**.  
+
+Here is a simpler example:
+
+```{r}
+Mat <- rbind(
+  c(1,2),
+  c(3,4)
+)
+
+vec <- c(1, 100)
+
+Mat * vec
+```
+
+One solution to this problem (there are many ways to approach it!) is to be creative with transposing your matrix:
+
+```{r}
+new_mat <- t(Mat)*vec
+new_mat
+new_mat <- t(new_mat)
+new_mat
+```
+
+### Hint 3
+
+This process of unveiling a photo will only work if you do each step, in order, exactly once.  If you start to get thrown off, simply re-load the matrix `M` by re-running the code, and run each step again.
+
+## Your turn
+
+Before you finalize your process, delete everything above "Your Turn", except for the setup code chunk, so that you are not duplicating steps 1 and 2.
+
+Perform the following steps (we have already done 1 and 2) to discover the secret picture!
+
+
+1. Matrix-multiply M by A.
+
+
+2. Multiply every row of M elementwise by x. 
+
+
+3. Make a diagonal matrix called Y whose diagonal values are the elements of the vector y.  Matrix-multiply the inverse of Y by M.
+
+
+4.  Calculate the determinant of B.  Add this scalar to every element of M.
+
+
+5. Use `eigen()` to find the eigenvalues and eigenvectors of B.  Find the sum of the third eigenvector of B. Multiply every element of M by this scalar.
+
+
+6. Multiply each element of M by the corresponding element of the matrix formed by (xy')'.
+
+
+7. Find the singular value decomposition H = UDV' using `svd()`.  Multiply each element of M by each element of 100*U. 
+
+
+8. Calculate the sum of the singular values of H.  Divide *every* element of M by this scalar.
+
+
+## The results
+
+Run the following code to plot your result.  If it does not look like a real photographic image, something has gone wrong - go back and check your steps.
+
+```{r}
+image(M, col = gray((1:100)/100), asp = 1, axes = FALSE)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

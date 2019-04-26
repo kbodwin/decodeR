@@ -1,0 +1,92 @@
+---
+title: 'decodeR:  General Review'
+author: 'SOLUTIONS'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE)
+```
+
+## The Caesar Cipher
+
+The Caesar Cipher is one of the earliest known methods of encrypting text.  The way it works is that every letter in the text is "shifted" a certain amount.  For example, a Caeasar cipher of `abc` with a shift of `4` would result in `efg`.
+
+This activity will ask you to decode a secret message using the Caesar cipher.  You may want to start by googling around, just to get ideas about how this cipher works.
+
+## Task One:  Function writing
+
+Write a function called `caesar` that translates messages.  This function should take as arguments a single word (as a string) and a number to shift by (can be positive or negative).  It should return the word that has been shifted.
+
+Hints:
+
+* You will want to think about how your code should handle numbers that are negative/zero, and numbers that are larger than 26.
+* There is a pre-loaded vector called `letters` that contains a-z.
+
+If your function is successful, the code below should return a real word.
+
+```{r}
+
+library(tidyverse)
+
+shift_letter <- function(letter, num){
+  
+  this_index <- which(letters == letter)
+  new_index <- this_index + num
+  
+  new_index = new_index %% 26
+  
+  if(new_index == 0){
+    new_index = 26
+  }
+  
+  letters[new_index]
+  
+}
+
+caesar <- function(word, num){
+  
+  letters_in_word <- unlist(str_split(word, ""))
+  
+  paste0(map_chr(letters_in_word, ~shift_letter(.x, num)), collapse = "")
+  
+}
+
+caesar("sfzqlov", -23)
+
+```
+
+## Task Two: Decode a message
+
+The encrypted message can be loaded using the code below.  This message has been encrypted via the Caesar cipher, with an unknown shift.
+
+```{r}
+
+message <- read.csv("./general/message_encrypted",
+                    stringsAsFactors = FALSE, header = TRUE)$x
+```
+
+
+1. Use your `caesar` function on the first word only, trying all the possible shifts from 0 to 26.  Determine which shift was used for the full message.
+
+```{r}
+for(i in 1:26){
+  
+  caesar(message[1], i)
+  
+}
+```
+
+
+2. Use `map` or similar to decode the full message.
+
+```{r}
+translated_words <- map_chr(message, ~caesar(.x, 9))
+str_c(translated_words, collapse = " ")
+```
+
+
+3. On Polylearn, submit the name of the historical figure who gave the speech in the message.
+
+```
+Marc Antony, in "Julius Caesar" by Shakespeare
+```

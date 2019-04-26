@@ -1,0 +1,149 @@
+---
+title: "decodeR:  Base R"
+author: "SOLUTIONS"
+output: html_document
+---
+
+Today you will be creating and manipulating vectors, lists, and data frames to uncover a top secret message.
+
+Some advice:
+* Work with those around you
+* Google is your friend!  If an error is confusing, copy it into Google and see what other people are saying.  If you don't know how to do something, search for it.
+* Just because there is no error message doesn't mean everything went smoothly.  Use the console to check each step and make sure you have accomplished what you wanted to accomplish.
+
+## Part One: Setup
+
+Each of the following R chunks will cause an error and/or do the desired task incorrectly.  Find the mistake, and correct it to complete the intended action. 
+
+1. Create vectors containing the upper case letters, lower case letters, and some punctuation marks.
+
+```{r}
+lower_case <- c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
+
+upper_case <- c("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z") 
+# comma between H and I
+
+punctuation <- c(".", ",", "!", "?", "'", '"', "(", ")", " ", "-", ";", ":")
+# single quotes around double quote character
+
+```
+
+2. Make one long vector containing all the symbols.
+
+```{r}
+
+my_symbols <- c(lower_case, upper_case, punctuation)
+#c(), not cbind()
+
+```
+
+3. Turn the `my_symbols` vector into a data frame, with the variable name "Symbol"
+
+```{r}
+my_symbols <- data.frame(my_symbols)
+names(my_symbols) = "Symbol"
+#data.frame, quotes around "Symbol"
+```
+
+
+4. Find the total number of symbols we have in our data frame.  
+
+```{r}
+len <- length(my_symbols$Symbol)
+# we are interested in the length of the column/variable
+```
+
+
+5. Create a new variable in your dataframe that assigns a number to each symbol.
+
+```{r}
+my_symbols$Num <- 1:len
+# $ not %
+```
+
+## Part Two: Decoding the secret message.
+
+This chunk (which should NOT have errors) will load up the encoded secret message as a vector:
+
+```{r}
+
+top_secret <- read.csv("./Base_R/Secret_Code", header = FALSE)$V1
+
+```
+
+Write your own code to complete the steps below.
+
+1. Add 14 to every number.
+2. Multiply every number by 18, then subtract 257.
+3. Exponentiate every number.
+4. Square every number.
+
+```{r}
+top_secret <- top_secret + 14
+top_secret <- top_secret*18 - 257
+top_secret <- exp(top_secret)
+top_secret <- top_secret^2
+```
+
+
+**Checkpoint:** Headquarters has informed you that at this stage of decoding, there should be 352 numbers in the secret message that are below 17.
+
+```{r}
+sum(top_secret < 17)
+```
+
+
+5. Turn your vector of numbers into a matrix with 5 columns.
+6. Create a vector of all the even numbers between 1 and 382. Name it "evens".
+7. Subtract the "evens" vector from the first column of your secret message matrix.
+8. Subtract 100 from all numbers in the third column and 18-24th rows.
+9. Multiply all numbers in the 4th and 5th column by 2.
+10. Turn your matrix back into a vector.
+
+```{r}
+top_secret <-  matrix(top_secret, ncol = 5)
+top_secret[,1] <- top_secret[,1] - (1:191)*2
+top_secret[18:24, 3] <- top_secret[18:24, 3] - 100
+top_secret[,4:5] <- top_secret[,4:5]*2
+top_secret <- c(top_secret)
+```
+
+
+**Checkpoint:** Headquarters has informed you that at this stage of decoding, all numbers in indices 500 are between 0 and 100.
+
+```{r}
+sum(top_secret[500:955] > 100 | top_secret[500:955] < 0)
+```
+
+
+11. Take the square root of all numbers in indices 38 to 465.
+12. Round all numbers to the nearest whole number.
+13. Replace all instances of the number 39 with 20.
+
+```{r}
+top_secret[38:465] <- sqrt(top_secret[38:465])
+
+top_secret <- round(top_secret)
+
+top_secret[top_secret == 39] <- 20
+
+```
+
+
+**Checkpoint:** Headquarters has informed you that your final message should have 344 even numbers.
+
+```{r}
+sum(top_secret %% 2)
+```
+
+
+
+## Part 3: The secret message!
+
+Use your final vector of numbers as indices for my_symbols to discover the final message!
+
+```{r}
+print(my_symbols$Symbol[top_secret])
+```
+
+

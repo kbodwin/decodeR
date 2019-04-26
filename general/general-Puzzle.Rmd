@@ -1,0 +1,46 @@
+---
+title: 'decodeR: general review'
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+## The Caesar Cipher
+
+The Caesar Cipher is one of the earliest known methods of encrypting text.  The way it works is that every letter in the text is "shifted" a certain amount.  For example, a Caeasar cipher of `abc` with a shift of `4` would result in `efg`.
+
+This activity will ask you to decode a secret message using the Caesar cipher.  You may want to start by googling around, just to get ideas about how this cipher works.
+
+## Task One:  Function writing
+
+Write a function called `caesar` that translates messages.  This function should take as arguments a single word (as a string) and a number to shift by (can be positive or negative).  It should return the word that has been shifted.
+
+Hints:
+
+* You will want to think about how your code should handle numbers that are negative/zero, and numbers that are larger than 26.
+* There is a pre-loaded vector called `letters` that contains a-z.
+
+If your function is successful, the code below should return a real word.
+
+```{r, eval = FALSE}
+caesar("sfzqlov", -23)
+```
+
+## Task Two: Decode a message
+
+The encrypted message can be loaded using the code below.  This message has been encrypted via the Caesar cipher, with an unknown shift.
+
+```{r}
+
+message <- read.csv("./general/message_encrypted",
+                    stringsAsFactors = FALSE, header = TRUE)$x
+```
+
+
+1. Use your `caesar` function on the first word only, trying all the possible shifts from 0 to 26.  Determine which shift was used for the full message.
+
+2. Use `map` or similar to decode the full message.
+

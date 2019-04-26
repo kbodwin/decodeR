@@ -1,0 +1,94 @@
+---
+title: "In-Class Activity:  Working with strings"
+author: ""
+date: ""
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Setup
+
+
+
+```{r}
+
+library(tidyverse)
+library(lubridate)
+
+message <- read.csv("https://www.dropbox.com/s/lgpn3vmksk3ssdo/scrambled_message.txt?dl=1", stringsAsFactors = FALSE)$Word
+```
+
+
+## Warm-up exercises
+
+1. How many characters are in the scrambled message?
+
+```{r}
+message %>% str_length() %>% sum()
+
+```
+
+
+2. How many of these characters are white space?
+
+```{r}
+message %>% str_count("[:blank:]") %>% sum()
+```
+
+3. How many words are in the scrambled message?
+
+```{r}
+message %>% length()
+```
+
+
+4. Show all the punctuation marks in the scrambled message.
+
+```{r}
+message %>% str_extract_all("[:punct:]") %>% unlist()
+```
+
+5. Print out, in all capitals, the longest word in the scrambled message.
+
+```{r}
+long <- message %>% str_count("[^ ]") %>% which.max()
+message[long] %>% str_to_upper()
+```
+
+
+6. Print out every word that starts with the letter "m" and ends with the letter "z" in the scrambled message.
+
+```{r}
+message %>% str_extract_all("m.*z") %>% unlist()
+```
+
+
+## Decode a message
+
+Now complete the following steps to decode the message:
+
+1. Remove any spaces before or after each word.
+2. No word should be longer than 20 characters. Drop all extras off the end of each word.
+3. Any time you see the word "ugh", with any number of h's, followed by a punctuation mark, delete this.
+4. Replace all instances of exactly 2 a's with exactly 2 e's.
+5. Replace all z's with t's.
+6. Every word that ends in b, change that to a y.  *Hint: punctuation!*
+7. Every word that starts with k, change that to a v.  *Hint: capitalization!*
+8. Use `collapse` to recombine all your words into a message.
+9. Find the movie this quote is from, and enter that on PolyLearn.
+
+```{r}
+message %>%
+  str_trim(side = "both") %>%
+  str_trunc(16, side = "right", ellipsis = "") %>%
+  str_replace_all("ugh+[:punct:]", "") %>%
+  str_replace_all("a{2}", "ee") %>%
+  str_replace_all("z", "t") %>%
+  str_replace_all("(b$)|(b[:punct:])", "y") %>%
+  str_replace_all("^k", "v") %>%
+  str_replace_all("^K", "V") %>% 
+  str_c(collapse = " ")
+```
+
