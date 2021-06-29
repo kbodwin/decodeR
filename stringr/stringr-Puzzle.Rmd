@@ -42,5 +42,5 @@ Now complete the following steps to decode the message:
 6. Every word that ends in b, change that to a y.  *Hint: punctuation!*
 7. Every word that starts with k, change that to a v.  *Hint: capitalization!*
 8. Use `str_c` to recombine all your words into a message.
-9. Find the movie this quote is from, and enter that on PolyLearn.
+9. Find the movie this quote is from.
 

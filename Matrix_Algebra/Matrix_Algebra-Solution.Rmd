@@ -113,26 +113,70 @@ Perform the following steps (we have already done 1 and 2) to discover the secre
 
 1. Matrix-multiply M by A.
 
+```{r}
+# Correct step:
+M <- M %*% A
+```
 
 2. Multiply every row of M elementwise by x. 
+
+```{r}
+M <- t(t(M)*x)
+```
+
 
 
 3. Make a diagonal matrix called Y whose diagonal values are the elements of the vector y.  Matrix-multiply the inverse of Y by M.
 
+```{r}
+Y <- diag(y)
+
+M <- solve(Y) %*% M 
+
+```
+
 
 4.  Calculate the determinant of B.  Add this scalar to every element of M.
 
+```{r}
+
+det <- det(B)
+M <- M + det
+
+```
 
 5. Use `eigen()` to find the eigenvalues and eigenvectors of B.  Find the sum of the third eigenvector of B. Multiply every element of M by this scalar.
 
+```{r}
+evs <- eigen(B)
+M <- M * sum(evs$vectors[,3])
+```
 
 6. Multiply each element of M by the corresponding element of the matrix formed by (xy')'.
 
+```{r}
+M <- M*t(tcrossprod(x,y))
+```
 
 7. Find the singular value decomposition H = UDV' using `svd()`.  Multiply each element of M by each element of 100*U. 
 
+```{r}
+
+svd <- svd(H)
+
+M <- M * (100*svd$u)
+
+```
 
 8. Calculate the sum of the eigenvalues of M.  Divide *every* element of M by this scalar
+
+```{r}
+
+tr <- sum(svd$d)
+
+M = M/tr
+
+```
 
 
 ## The results
@@ -142,20 +186,3 @@ Run the following code to plot your result.  If it does not look like a real pho
 ```{r}
 image(M, col = gray((1:100)/100), asp = 1, axes = FALSE)
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
