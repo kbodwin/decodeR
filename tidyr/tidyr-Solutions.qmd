@@ -1,0 +1,260 @@
+---
+title: "Practice Activity 4: Tidy Data with tidyr"
+output: html
+execute: 
+  echo: true
+---
+## Setup
+
+Today you will be tidying untidy data to explore the relationship between
+countries of the world and military spending.
+
+```{r packages}
+#| message: false
+#| warning: false
+
+library(readxl) 
+library(tidyverse)
+```
+
+## Data for Today's Activity  
+
+The SIPRI (Stockholm International Peace Research Institute) Military Expenditure
+Database is an open source dataset with contains consistent time series on the 
+military spending of countries for the period 1949–2019. The database is updated
+annually, which may include updates to data for any of the years included in the
+database.
+
+Military expenditure in local currency at current prices is presented according
+to both the financial year of each country and according to calendar year, 
+calculated on the assumption that, where financial years do not correspond to 
+calendar years, spending is distributed evenly through the year. Figures in
+constant (2018) and current US $, as a share of GDP and per capita 
+are presented according to calendar year. 
+
+The availability of data varies considerably by country, but for a majority of 
+countries that were independent at the time, data is available from at least the
+late 1950s. Estimates for regional military expenditure have been extended 
+backwards depending on availability of data for countries in the region, but no 
+estimates for total world military expenditure are available before 1988 due to 
+the lack of data for the Soviet Union.
+
+SIPRI military expenditure data is based on open sources only.
+
+## Data Import
+
+1. Modify the code below to read the military expenditures data into your
+work space. You will need to modify the path to access the data. 
+
+```{r data}
+military <- read_xlsx(
+  here::here("tidyr", "gov_spending_per_capita.xlsx"), 
+  sheet = "Share of Govt. spending", 
+  skip = 6, 
+  n_max = 191)
+```
+
+## Data Cleaning 
+
+In addition to `NA`s, missing or unavailable values were coded two ways.
+
+2. Find these two methods and write the code to replace these values with
+NAs. Save the mutated dataset into a new object named `military_clean`.  
+
+```{r missing-values}
+military_clean <- military |> 
+                    mutate(
+                      across(.cols = `1988`:`2019`, 
+                             .fns = ~ na_if(.x , y = ". .")
+                             ), 
+                           across(.cols = `1988`:`2019`,
+                                  .fns = ~ na_if(.x, y = "xxx")
+                                  )
+                           )
+```
+
+**Note**: Because the variables are numbers, which is not syntaxtically correct, 
+you need to surround the names of these variables with either backticks (`), 
+quotation marks ("), or single quotes ('). 
+
+Because of the use of characters to mark missing values, all of the 
+columns 1988 through 2019 were read in a characters. 
+
+3. Mutate these columns to all be numeric data types, instead of a character
+data type. Save these changes into an updated version of `military_clean`.  
+
+```{r convert-to-numeric}
+military_clean <- military_clean |> 
+  mutate(
+    across(.cols = `1988`:`2019`, 
+           .fns = as.numeric)
+         )
+```
+
+If you give the `Country` column a look, you'll see that there are names
+of continents and regions included. These names are only included to make it 
+simpler to find countries, as they contain no data. 
+
+Luckily for us, these names were stored in the "Regional totals" sheet. We can 
+use the `Region` column of this dataset to filter out the names we don't want. 
+
+Run the code below to read in the "Regional totals" dataset, making any 
+necessary modifications to the path (since it is *my* path!).  
+
+```{r}
+#| message: false
+cont_region <- read_xlsx(
+  here::here("tidyr", "gov_spending_per_capita.xlsx"), 
+  sheet = "Regional totals", 
+  skip = 14
+  ) |> 
+  filter(
+    Region != "World total (including Iraq)", 
+    Region != "World total (excluding Iraq)"
+    )
+
+```
+
+**Note:** I filtered out the `Region`s that had `"World total"`, since I don't 
+want to use those for my filtering. 
+
+**Another Note:** It's something we haven't discussed, but you can make 
+changes to your dataset *when* you read it in! Here, I am reading in the data, 
+and immediately piping it into the `filter()` function to remove the
+observations I don't want. Fun! 
+
+If you think about `filter()`ing data, so that only certain values of a variable 
+are retained, we should remember our friendly `%in%` function! However, if you
+think about the code below, you should notice that this code retains only the 
+values we wanted to remove! 
+
+```
+military_clean |> 
+  filter(Country %in% cont_region$Region)
+```
+
+Unfortunately, R doesn't come with a built-in `!%in%` function. However, a
+clever way to filter out observations you don't want is with a join. A tool 
+tailored just for this scenario is the `anti_join()` function. This function 
+will return all of the rows of one dataset **without** a match in another 
+dataset. 
+
+4. Use the `anti_join()` function to filter out the `Country` values we 
+don't want in the `military_clean` dataset. The `by` argument needs to be 
+filled with the name(s) of the variables that the two datasets should be joined 
+with. 
+
+**Hint:** To join by different variables on `x` and `y`, use a named vector. For
+example, `by = c("a" = "b")` will match `x$a` to `y$b`.
+
+```{r antijoin}
+military_clean <- military_clean |> 
+  anti_join(cont_region, by = c("Country" = "Region"))
+```
+
+__Part One Answer:__ What **regions** (not countries) were not removed from the
+`military_clean` dataset? Use their correct capitalization **and** punctuation! 
+
+```{r left-out}
+military_clean |> 
+  filter(
+    if_all(.cols = `1988`:`2019`, .fns = is.na), 
+    !is.na(Country)
+    ) |> 
+  pull(Country)
+```
+
+**Note:** The `"Middle East"` region is still in the dataset, because in the 
+"Regional totals" sheet it has parentheses next to it indicating whether it is 
+including or excluding Iraq. `"Asia & Oceania"` has an `&` in one dataset and 
+an `and` in the other dataset, which is similar for `"Central America and the 
+Caribbean"`. This goes to show that if you aren't consistent bad things can 
+happen! 
+
+## Data Organization
+
+The comparison I am interested in looking at the military expenditures of 
+different countries across every year in the data. Something like this:  
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+military_clean |>  
+  pivot_longer(cols = `1988`:`2019`,
+               names_to = "Year", 
+               values_to = "Spending") |> 
+  ggplot(mapping = aes(y = Year, x = Spending)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_jitter(color = "tomato", 
+              alpha = 0.2, 
+              width = 0.1, 
+              height = 0.1) + 
+  labs(x = "Spending (% of total Government Spending)")
+```
+
+Unfortunately, this requires that each year is included in **one** column, not 
+multiple columns! 
+
+To tidy a dataset like this, we need to gather those columns into a new pair of
+variables. To do this process we need three parameters:  
+
+* The set of columns that represent values, not variables. In these data, those
+are all the columns from `"1988"` to `"2018"`.  
+
+* The name of the variable to move the column names to. In these data, this 
+could be `"Year"`. 
+
+* The name of the variable to move the column values to. In these data, this 
+could be labeled `"Spending"`. 
+
+All of these pieces together form the arguments to the `pivot_longer()`
+function. 
+
+5. Pivot the cleaned up `military` dataset to a "longer" orientation. Save 
+this new "long" version as a new dataset (**do not** overwrite your cleaned 
+up dataset)!
+
+```{r}
+long_military <- military_clean |>  
+              pivot_longer(cols = `1988`:`2019`,
+                           names_to = "Year",
+                           values_to = "Spending"
+                           )
+
+```
+
+
+## Data Visualization Exploration  
+
+Now that we've transformed the data, let's create a plot to explore the military 
+spending across the years.   
+
+6. Create side-by-side boxplots of the military spending for each year. 
+
+**Hint:** Place the `Year` variable on an axis that makes it easier to read the 
+labels! 
+
+```{r, warning = FALSE, message = FALSE}
+
+long_military |> 
+  ggplot(mapping = aes(x = Spending, y = Year)) + 
+  geom_boxplot(outlier.shape = NA, alpha = 0.2) + 
+  geom_jitter(alpha = 0.4,
+              width = 0.1, 
+              height = 0.1, 
+              color = "tomato") + 
+  labs(x = "Military Spending as % of Total Government Spending")
+  
+```
+
+__Part Two Answer:__ What year was the second largest military expenditure? 
+What country had this expenditure? 
+
+```{r}
+long_military |> 
+  slice_max(order_by = Spending, n = 2)
+```
+
+**Reason:** Gulf War

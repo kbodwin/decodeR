@@ -1,0 +1,185 @@
+---
+title: "Practice Activity 4: Tidy Data with tidyr"
+format: html
+execute: 
+  echo: true
+  eval: false
+---
+
+## Setup
+
+Today you will be tidying untidy data to explore the relationship between
+countries of the world and military spending.
+
+```{r packages}
+library(readxl) 
+library(tidyverse)
+```
+
+## Data for Today's Activity
+
+The SIPRI (Stockholm International Peace Research Institute) Military
+Expenditure Database is an open source dataset with contains consistent time
+series on the military spending of countries for the period 1949--2018. The
+database is updated annually, which may include updates to data for any of the
+years included in the database.
+
+Military expenditure in local currency at current prices is presented according
+to both the financial year of each country and according to calendar year,
+calculated on the assumption that, where financial years do not correspond to
+calendar years, spending is distributed evenly through the year. Figures in
+constant (2017) and current US \$, as a share of GDP and per capita are
+presented according to calendar year. The availability of data varies
+considerably by country, but for a majority of countries that were independent
+at the time, data is available from at least the late 1950s. Estimates for
+regional military expenditure have been extended backwards depending on
+availability of data for countries in the region, but no estimates for total
+world military expenditure are available before 1988 due to the lack of data for
+the Soviet Union.
+
+SIPRI military expenditure data is based on open sources only.
+
+## Data Inspection
+
+**Download the data [here](https://app.box.com/s/txssesmg6xi28ttf3kfrrfmivfegdkmb). Open the Excel file and inspect the file.**
+
+First, you should notice that there are ten different sheets included in the
+dataset. We are interested in the sheet labeled "Share of Govt. spending" which
+contains information about the share of government spending that is allocated to
+military spending.
+
+Next, you'll notice that there are notes about the dataset in the first six
+rows. Ugh! Also notice that the last six rows are footnotes about the dataset.
+**Ugh**!
+
+Rather than copying this one sheet into a new Excel file and deleting the first
+and last six rows, let's learn something new about the `read_xlsx()` function!
+
+## Data Import
+
+The `read_xlsx()` function has a `sheet` argument, where you specify the name of
+the sheet that you want to use.
+
+**Note:** The name must be passed in as a string (in quotations)!
+
+The `read_xlsx()` function also has a `skip` argument, where you specify the
+number of rows you want to be skipped *before* reading in the data.
+
+Finally, `read_xlsx()` also has a `n_max` argument, where you specify the
+maximum number of rows of data to read in.
+
+1. Modify the code below to read the military expenditures data into your
+work space. You will need to modify the path to access the data. 
+
+```{r data}
+military <- read_xlsx(here::here("tidyr", 
+                                 "gov_spending_per_capita.xlsx"), 
+                      sheet = ____, 
+                      skip = ____, 
+                      nmax = ____)
+```
+
+## Data Cleaning
+
+In addition to `NA`s, missing or unavailable values were coded two ways.
+
+2. Find these two methods and write the code to replace these values with
+NAs. Save the mutated dataset into a new object named `military_clean`.
+
+Because of the use of characters to mark missing values, all of the columns 1988
+through 2019 were read in a characters.
+
+3. Mutate these columns to all be numeric data types, instead of a character 
+data type. Save these changes into an updated version of `military_clean`.
+
+If you give the `Country` column a look, you'll see that there are names of
+continents **and** regions included. These names are only included to make it
+simpler to find countries, as they contain no data.
+
+Luckily for us, these region names were also stored in the "Regional totals"
+sheet. We can us the `Region` column of this dataset to filter out the names we
+don't want.
+
+Run the code below to read in the "Regional totals" dataset, making any
+necessary modifications to the path.
+
+```{r regions-data}
+cont_region <- read_xlsx(here::here("tidyr",
+                                    "gov_spending_per_capita.xlsx"), 
+                      sheet = "Regional totals", 
+                      skip = 14) |> 
+  filter(Region != "World total (including Iraq)", 
+         Region != "World total (excluding Iraq)")
+```
+
+If you think about `filter()`ing data, so that only certain values of a variable
+are retained, we should remember our friendly `%in%` function! However, if you 
+think about the code below, you should notice that this code retains only the
+values we wanted to remove!
+
+```
+military_clean |> 
+  filter(Country %in% cont_region$Region)
+```
+
+Unfortunately, R doesn't come with a built-in `!%in%` function. However, a
+clever way to filter out observations you don't want is with a join. A tool
+tailored just for this scenario is the `anti_join()` function. This function
+will return all of the rows of one dataset **without** a match in another
+dataset.
+
+4. Use the `anti_join()` function to filter out the `Country` values we don't
+want in the `military_clean` dataset. The `by` argument needs to be filled with
+the name(s) of the variables that the two datasets should be joined with.
+
+**Hint:** To join by different variables on `x` and `y`, use a named vector. For
+example, `by = c("a" = "b")` will match `x$a` to `y$b`.
+
+### Part One Answer
+
+What regions were not removed from the `military_clean` dataset? Use their
+correct capitalization **and** punctuation!
+
+## Data Organization
+
+The comparison I am interested in looking at the military expenditures across
+every year in the data. Something like this:
+
+<https://app.box.com/embed/s/ed74ynmti87pk8oats4jdbhwb5rqf7cm?sortColumn=date&view=list>
+
+Unfortunately, this requires that every year is included in one column!
+
+To tidy a dataset like this, we need to pivot the columns of years from wide
+format to long format. To do this process we need three parameters:
+
+-   The set of columns that represent values, not variables. In these data,
+those are all the columns from `1988` to `2018`.
+
+-   The name of the variable that should be created to move these columns into.
+In these data, this could be `"Year"`.
+
+-   The name of the variable that should be created to move these column's
+values into. In these data, this could be labeled `"Spending"`.
+
+Each of these pieces form the three required arguments to the `pivot_longer()`
+function.
+
+5. Pivot the cleaned up `military` dataset to a "longer" orientation. Save this
+new "long" version as a new dataset (**do not** overwrite your cleaned up dataset)!
+
+## Data Visualization Exploration
+
+Now that we've transformed the data, let's create a plot to explore the military
+spending across the years.
+
+6. Create side-by-side boxplots of the military spending for each year.
+
+**Hint:** Place the `Year` variable on an axis that makes it easier to read the
+labels!
+
+### Part Two Answer
+
+What year was the second largest military expenditure? What country had this
+expenditure?
+
+**Bonus**: What is the reason for this large expenditure?
