@@ -1,0 +1,107 @@
+---
+title: "PA: Simulation"
+author: "Stat 331"
+output: rmdformats::readthedown
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set()
+set.seed(1957)
+```
+
+A man named Professor Harold Hill wanders into your small town.  He claims to be selling top-quality instruments for a marching band.  He begins selling his instruments to all the children in town.
+
+You are suspicious of Professor Hill, and think that perhaps he is selling instruments made of subpar materials, to scam the townsfolk.
+
+You do some research on the weights of properly crafted brass instruments, and you learn the following facts:
+
+* Trombones weights are Normally distributed, with a mean weight of 4.6 pounds and a standard deviation of 0.8 pounds.
+
+* Trumpet weights are Uniformly distributed between 1.5 and 3.5 pounds.
+
+* Reed instruments (like clarinets, bassoons, and saxophones) have weights that 
+are Chi-Square distributed with 4 degrees of freedom.
+
+
+## Warmup
+
+* What is the 95th percentile for trumpet weight?
+
+* What is the 10th percentile for trombone weight?
+
+* About what percent of trombones do you expect to be more than 5 pounds?
+
+* About what percent of reed instruments do you expect to be more than 5 pounds?
+
+* Simulate 100 random trombone weights.  How many of them were below 4 pounds?
+
+## Catching a con
+
+You manage to intercept a shipping notice for delivery to Professor Hill.  It says the following:
+
+
+```
+Wells Fargo Shipment 1957
+
+To:  Harold Hill, Mason City, Iowa
+From:  Music Factory, Gary, Indiana
+
+Items included:
+    Trombones: 76
+    Cornets: 110
+    Saxophones: 542
+    Clarinets: 318
+    Bassoons: 175
+    
+Total Shipped Weight: 4532 lbs.
+
+```
+
+This is your chance to catch Professor Hill in his lie!
+
+First, write a function that samples the correct number of weights of trombones, 
+cornets (trumpets), and reed instruments, and then returns the total weight.
+
+Then, use that function to create 1000 random samples of total weight.
+
+(Some code is provided for you below.  Do not change the seed!)
+
+```{r, eval = FALSE}
+music_man <- function(n_tromb, n_cor, n_reed){
+  
+  trombones <- rnorm(n_tromb, ...)
+  cornets <- ...
+  reeds <- ...
+  
+  return()
+  
+}
+
+set.seed(1957)
+
+my_weights <- replicate(1000, music_man(76, ...))
+```
+
+
+How many of these samples had a weight less than Prof. Hill's shipment?
+Do you believe Professor Hill is lying, or not?
+
+```{r, include = FALSE}
+music_man <- function(){
+  
+  trom <- rnorm(76, mean = 4.6, sd = 0.8)
+  cor <- runif(110, 1.5, 3.5)
+  reed <- rchisq(1035, 4)
+  
+  return(sum(trom, cor, reed))
+  
+}
+
+set.seed(1957)
+
+my_weights <- replicate(1000, music_man())
+sum(my_weights < 4532)
+```
+
+
+

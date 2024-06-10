@@ -1,0 +1,49 @@
+---
+title: "Practice Activity: Regression"
+output: rmdformats::readthedown
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(include = FALSE, eval = FALSE)
+```
+
+```{r}
+altj <- c(0, 1, 1, 1, 0, 0, 1, 1)
+```
+
+```{r}
+dat <- read_csv(here::here("8_Regression_Testing", "PA-regression", "data_2.csv"))
+
+new_dat <- dat %>%
+  select(-z) %>%
+  mutate(
+    y = y - mean(y),
+    weight_before = x,
+    weight_after = 1.2*x + y/5
+  )
+
+new_dat %>%
+  ggplot(aes(x = weight_before, y = weight_after)) +
+  geom_point()
+
+mod <- lm(weight_after ~ weight_before, data = new_dat)
+
+new_dat %>%
+  modelr::add_predictions(mod) %>%
+  ggplot(aes(x = weight_before, y = weight_after - pred)) +
+  geom_point()
+
+new_dat %>%
+  select(weight_before, weight_after) %>%
+  write_csv(here::here("8_Regression_Testing", "PA-regression", "mystery_animal.csv"))
+```
+
+The dataset "mystery_animal.csv" contains the weights of a particular animal before and after a year of eating only roasted duck.
+ 
+
+Compute a linear model to determine if the Duck Diet caused the animal to gain weight, lose weight, or neither.
+ 
+
+Plot the residuals (observed value minus predicted value) of this model versus
+the x-variable.  The function `add_predictions()` from the "modelr" package may be useful to you.

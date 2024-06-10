@@ -1,0 +1,195 @@
+---
+title: "Practice Activity 2: Objects and subsetting"
+author: "Stat 331"
+output: rmdformats::readthedown
+---
+
+Today you will be creating and manipulating vectors, lists, and data frames to uncover a top secret message.
+
+## Dealing with errors
+
+As you work through this PA, you will encounter some code that does not work as you want it to.  Don't despair!  Errors (when R is unable to run your code) and bugs (when the code doesn't do what you hoped) are a natural part of coding.  Even the best of the best deal with these problems regularly - learning to track down the issue is a skill that you can learn and practice.
+
+### Advice for dealing with errors
+
+**Errors can be sneaky - check results often** 
+
+If a chunk of code runs smoothly without giving you any error or warnings this does not necessarily mean it accomplished the desired task.
+
+It is a good habit to check the results of your code every time you finish a task.
+
+* In the text before the code chunk, make sure to briefly state what the point of the chunk is.  This will remind later readers - which might be your future self! - what the desired output is.
+
+* If you created a new object, take a look at it, either by clicking its name in your *Environment* tab or by typing its name into the console.  Make sure it looks about how you expect.
+
+* If you created or updated a data frame, make sure your edits did what you hoped.  Use the *Environment* or the `head()` function to investigate your changes.
+
+
+**Two heads are better than one**
+
+It can be hard to spot bugs in code that you wrote.  
+
+Work with those around you - if something goes wrong, ask a friend to take a peek at your code and see if any glaring errors (like *syntax error*) pop out.
+
+**Explain your code out loud**
+
+The best way to troubleshoot a sneaky but is to explain out loud each step of your code, and what you hoped to accomplish.
+
+If you are alone, try [Rubber Duck Debugging](https://en.wikipedia.org/wiki/Rubber_duck_debugging)!
+
+**Google is your friend**
+
+The whole of the internet is at your disposal!  Use it early, use it often.
+
+Some tricks:
+
+* Copy-paste the exact error message into Google. Chances are, somebody else had a similar problem and got a similar message.
+
+* Include package names in your search terms.  For example, "bar plot in ggplot" is a better search than "bar plot in R".
+
+
+### Part One: Data import and cleaning
+
+This section will clean today's dataset, so that you can use it more easily in Part Two.  
+
+First, we declare our package dependencies and load the data.
+
+(Note that the data loading function `read_csv` will give you an outpouring of helpful information about the dataset.  If you do not see the word "error", there is nothing to be concerned about.)
+
+```{r setup, message = FALSE, warning = FALSE}
+library(tidyverse)
+
+colleges <- read_csv("https://www.dropbox.com/s/bt5hvctdevhbq6j/colleges.csv?dl=1")
+```
+
+
+Now we will clean the data.  Alas, each of the R chunks in this section will cause an error and/or do the desired task incorrectly.  (Even the chunks that run without error are not correct!) You will need to find the mistake, and correct it, to complete the intended action. 
+
+
+There are too many variables in this dataset.  We don't need all of them. Narrow your dataset down to only:
+
+Name of the institution
+City, State, and ZIP code of the institution
+The Admissions Rate
+The average SAT score
+The number of undergraduate students
+The in and out of state tuitions
+Whether the school is public or private
+The "REGION" variable.
+
+```{r, eval = FALSE}
+colleges_clean <- colleges %>
+  select(INSTNM, CITY, STABBR, ZIP, CONTROL, ADM_RATE, SAT_AVG, TUITIONFEE_IN, TUITIONFEE_OUT, UGDS, REGION) 
+```
+
+Drop the schools that are private and for-profit (category 3).
+
+```{r, eval = FALSE}
+colleges_clean <- colleges_clean %>%
+  filter(CONTROL == 1, CONTROL == 2) 
+```
+
+Adjust the appropriate variables to be numeric.
+
+```{r, eval = FALSE}
+colleges_clean <- colleges_clean %>%
+  mutate(
+    TUITIONFEE_IN = numeric(TUITIONFEE_IN),
+    TUITIONFEE_OUT = numeric(TUITIONFEE_OUT),
+    SAT_AVG = numeric(SAT_AVG),
+    ADM_RATE = numeric(ADM_RATE)
+    ) 
+```
+
+Adjust the appropriate variables to be factors.
+
+```{r, eval = FALSE}
+colleges_clean %>% mutate(
+    CONTROL = as.factor(CONTROL),
+    REGION = as.factor(REGION)
+)
+```
+
+Create a new variable called TUITION_DIFF which contains the difference between in and out of state costs.
+
+```{r, eval = FALSE}
+colleges_clean <- colleges_clean %>% 
+    TUITION_DIFF = TUITIONFEE_OUT - TUITIONFEE_IN
+```
+
+
+Drop all the rows with missing data.  
+(This is not always a great idea!  Usually, even if *some* of the information is missing, we don't want to throw out the entire row.  This time, however, we'll be lazy.)
+
+```{r, eval = FALSE}
+colleges_clean <- colleges_clean %>% drop.na()
+```
+
+
+
+Lastly, notice that each of these steps started with 
+
+```{r, eval = FALSE}
+colleges_clean <- colleges_clean %>% ...
+```
+
+That is pretty redundant!  Instead, we could perform all these tasks as one long "pipeline".  Combine your (fixed) code chunks into a single chunk that cleans the data.
+
+```{r, include = FALSE}
+colleges_clean <- colleges %>%
+  select(INSTNM, CITY, STABBR, ZIP, CONTROL, ADM_RATE, SAT_AVG, TUITIONFEE_IN, TUITIONFEE_OUT, UGDS, REGION) %>%
+  filter(CONTROL != 3) %>%
+  mutate(
+    TUITIONFEE_IN = as.numeric(TUITIONFEE_IN),
+    TUITIONFEE_OUT = as.numeric(TUITIONFEE_OUT),
+    SAT_AVG = as.numeric(SAT_AVG),
+    ADM_RATE = as.numeric(ADM_RATE),
+    CONTROL = as.factor(CONTROL),
+    TUITION_DIFF = TUITIONFEE_OUT - TUITIONFEE_IN,
+    REGION = as.factor(REGION)
+    ) %>%
+    drop_na()
+```
+
+
+
+## Part Two:  Identify the mystery college
+
+Wow!  Your best friend Ephelia has been accepted to the college of her dreams!  Unfortunately, Ephelia is a very mysterious person, and she won't tell you directly which college this is.  You'll have to use her clues to figure out which school is her dream school.
+
+
+Clues:
+
+1. This college is located in Region 1.
+
+2. This college's admission rate is in the first quartile for the region.
+
+3. This college charges the same for in- and out-of-state tuition.
+
+4. The average SAT score of this college is an odd number.
+
+5. This college is NOT in New Hampshire or in the city of Boston.
+
+6. More than 3,000 people apply to this college every year.  (Assume the size of the freshman class is 1/4 of the undergraduate population.)
+
+7. Dr. Bodwin did not attend this college.
+
+8. Of the two options remaining at this step, Ephelia will attend the cheaper one.
+
+```{r, include = FALSE}
+colleges_clean %>%
+  filter(REGION == 1,
+         ADM_RATE < 0.4789,
+         TUITION_DIFF == 0) %>%
+  mutate(
+    SAT_even = SAT_AVG %% 2 != 0
+  ) %>%
+  filter(SAT_even,
+         CITY != "Boston",
+         STABBR != "NH") %>%
+  mutate(
+    app = as.numeric(UGDS)/4/ADM_RATE
+  ) %>%
+  filter(app > 3000)
+```
+
